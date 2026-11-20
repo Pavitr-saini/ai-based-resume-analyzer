@@ -1,36 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# AI Resume Analyzer & ATS Optimizer
 
-## Getting Started
+A full-stack AI-powered Resume Analyzer built with **Next.js (App Router)**, **React**, **Tailwind CSS**, and an **ATS Intelligence Engine**.
 
-First, run the development server:
+## 🚀 Features
 
+- **Document Parser**: Supports PDF (`.pdf`), Microsoft Word (`.docx`), and text files up to 5 MB.
+- **ATS Scoring Algorithm**:
+  - Technical keyword matching against target job specifications.
+  - Measurable impact detection (percentages, metrics, dynamic action verbs).
+  - Standard ATS section compliance (Contact, Summary, Experience, Skills, Education, Projects).
+  - Length and readability scoring.
+- **Keyword Gap Analysis**:
+  - Matched skills inventory.
+  - High-priority missing keywords with estimated score boost percentages.
+- **Tailored Recommendations**: Real, prioritized suggestions based on the uploaded resume and job description.
+- **AI Bullet Point Enhancer**: Rewrites passive resume statements into high-impact metric statements.
+- **Modern Responsive UI**: Built with dark mode aesthetics, interactive meters, and real-time status feedback.
+
+## 🛠️ Tech Stack & Architecture
+
+- **Frontend**: Next.js 16 (App Router), React 19, Tailwind CSS 4, Lucide React icons.
+- **Backend**: Next.js Server Route Handlers (`/api/analyze`).
+- **Parsing Engines**: `pdf-parse` (v2), `mammoth` (DOCX extraction).
+- **Core Engine**: `lib/atsAnalyzer.js` (NLP keyword tokenizer, section classifier, and scoring system).
+
+## 💻 Getting Started
+
+### 1. Install Dependencies
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Run the Development Server
+```bash
+npm run dev
+```
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📡 Backend API Reference
 
-## Learn More
+### `POST /api/analyze`
+Accepts `multipart/form-data`:
+- `resume`: File (PDF or DOCX document)
+- `jobDescription`: string (Target job requirements)
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Returns structured JSON:
+```json
+{
+  "success": true,
+  "data": {
+    "fileName": "resume.pdf",
+    "fileSizeMB": "0.15",
+    "atsScore": 84,
+    "scoreStatus": "Good Resume Score",
+    "jobMatch": 79,
+    "matchedKeywordsCount": 12,
+    "matchedKeywords": ["React.js", "TypeScript", "Tailwind CSS"],
+    "missingKeywords": [
+      { "name": "GraphQL", "importance": "High Priority", "boost": "+8% ATS Score" }
+    ],
+    "breakdown": {
+      "skillsMatch": 80,
+      "experienceImpact": 75,
+      "formattingATS": 90,
+      "contentDepth": 85
+    },
+    "detectedSections": {
+      "contact": true,
+      "summary": true,
+      "experience": true,
+      "skills": true,
+      "education": true,
+      "projects": true
+    },
+    "strengths": [...],
+    "suggestions": [...],
+    "rewrites": [...]
+  }
+}
+```
