@@ -1,4 +1,4 @@
-# AI Resume Analyzer & ATS Optimizer
+# AI-Resume Analyzer & ATS Optimizer
 
 A full-stack AI-powered Resume Analyzer built with **Next.js (App Router)**, **React**, **Tailwind CSS**, and an **ATS Intelligence Engine**.
 
