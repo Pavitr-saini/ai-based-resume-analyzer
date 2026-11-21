@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { extractTextFromBuffer, analyzeResumeATS } from "@/lib/atsAnalyzer";
 
-export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
+// Next.js 16 with cacheComponents: request handlers with request.formData() are dynamic by default.
+// Do not export legacy "dynamic" or "runtime" configs here as they conflict with cacheComponents in Turbopack.
 export const maxDuration = 60;
 
 export async function POST(request) {
