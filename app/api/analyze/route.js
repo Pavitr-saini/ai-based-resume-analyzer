@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { extractTextFromBuffer, analyzeResumeATS } from "@/lib/atsAnalyzer";
 
+export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
+export const maxDuration = 60;
+
 export async function POST(request) {
   try {
     const formData = await request.formData();

@@ -108,10 +108,31 @@ Requirements:
                 body: formData,
             });
 
-            const result = await response.json();
+            let result = null;
+            const contentType = response.headers.get("content-type") || "";
 
-            if (!response.ok || !result.success) {
-                throw new Error(result.error || "Analysis failed. Please verify your file and try again.");
+            if (contentType.includes("application/json")) {
+                try {
+                    result = await response.json();
+                } catch (parseErr) {
+                    console.error("Failed to parse JSON response:", parseErr);
+                }
+            } else {
+                const text = await response.text();
+                console.warn("Non-JSON response received from /api/analyze:", response.status, text);
+            }
+
+            if (!response.ok || !result || !result.success) {
+                const errorMessage = 
+                    result?.error ||
+                    (response.status === 504
+                        ? "The server took too long to respond (504 Gateway Timeout). Please try again with a smaller file."
+                        : response.status === 413
+                        ? "File too large (413): The resume file exceeds the server payload limit. Please upload a file under 4.5 MB."
+                        : response.status === 500
+                        ? "Server error (500): The server encountered an issue analyzing this file. Please verify the file is not corrupted and try again."
+                        : `Analysis request failed (${response.status || "Unknown status"}). Please try again.`);
+                throw new Error(errorMessage);
             }
 
             setResults(result.data);
