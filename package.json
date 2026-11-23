@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "python": "python app.py",
+    "start:all": "start cmd /k python app.py && next dev"
   },
   "dependencies": {
     "lucide-react": "^1.72.0",

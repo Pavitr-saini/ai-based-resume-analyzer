@@ -1,93 +1,58 @@
 import { NextResponse } from "next/server";
-import { extractTextFromBuffer, analyzeResumeATS } from "@/lib/atsAnalyzer";
 
-// Next.js 16 with cacheComponents: request handlers with request.formData() are dynamic by default.
-// Do not export legacy "dynamic" or "runtime" configs here as they conflict with cacheComponents in Turbopack.
-export const maxDuration = 60;
+export const config = { api: { bodyParser: false } };
 
 export async function POST(request) {
-  try {
-    const formData = await request.formData();
-    const resumeFile = formData.get("resume");
-    const jobDescription = formData.get("jobDescription");
-
-    // 1. Validation
-    if (!resumeFile || typeof resumeFile === "string") {
-      return NextResponse.json(
-        { success: false, error: "Please upload your resume file (PDF or DOCX)." },
-        { status: 400 }
-      );
-    }
-
-    if (!jobDescription || !jobDescription.trim()) {
-      return NextResponse.json(
-        { success: false, error: "Please enter a target job description." },
-        { status: 400 }
-      );
-    }
-
-    if (resumeFile.size > 5 * 1024 * 1024) {
-      return NextResponse.json(
-        { success: false, error: "Resume file size exceeds the 5 MB limit." },
-        { status: 400 }
-      );
-    }
-
-    // 2. Extract text from file buffer
-    const arrayBuffer = await resumeFile.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-
-    let resumeText = "";
     try {
-      resumeText = await extractTextFromBuffer(
-        buffer,
-        resumeFile.type,
-        resumeFile.name
-      );
-    } catch (extractError) {
-      console.error("Text extraction failed:", extractError);
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            "Could not parse text from this resume file. Please ensure it is an uncorrupted PDF or DOCX file.",
-        },
-        { status: 422 }
-      );
+        const formData = await request.formData();
+        const resumeFile = formData.get("resume");
+        const jobDescription = formData.get("jobDescription");
+
+        if (!resumeFile) {
+            return NextResponse.json(
+                { success: false, error: "Please upload your resume file (PDF or DOCX)." },
+                { status: 400 }
+            );
+        }
+
+        if (!jobDescription || !jobDescription.toString().trim()) {
+            return NextResponse.json(
+                { success: false, error: "Please enter a target job description." },
+                { status: 400 }
+            );
+        }
+
+        // Forward to Python backend at http://127.0.0.1:5000/api/analyze
+        const pythonBackendUrl = process.env.PYTHON_BACKEND_URL || "http://127.0.0.1:5000/api/analyze";
+
+        const pythonFormData = new FormData();
+        pythonFormData.append("resume", resumeFile);
+        pythonFormData.append("jobDescription", jobDescription);
+
+        let pythonRes;
+        try {
+            pythonRes = await fetch(pythonBackendUrl, {
+                method: "POST",
+                body: pythonFormData,
+            });
+        } catch (connErr) {
+            console.error("Failed to connect to Python backend:", connErr);
+            return NextResponse.json(
+                {
+                    success: false,
+                    error: "Unable to reach the Python ATS backend on http://127.0.0.1:5000. Please ensure the Python server is running (run 'python app.py')."
+                },
+                { status: 503 }
+            );
+        }
+
+        const data = await pythonRes.json();
+        return NextResponse.json(data, { status: pythonRes.status });
+    } catch (err) {
+        console.error("Next.js /api/analyze error:", err);
+        return NextResponse.json(
+            { success: false, error: err.message || "Internal server error" },
+            { status: 500 }
+        );
     }
-
-    if (!resumeText || resumeText.length < 30) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            "The resume file appears empty or contains only scanned images without selectable text. Please upload a text-based PDF or DOCX.",
-        },
-        { status: 422 }
-      );
-    }
-
-    // 3. Perform ATS analysis
-    const analysis = analyzeResumeATS(resumeText, jobDescription);
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        fileName: resumeFile.name,
-        fileSizeMB: (resumeFile.size / (1024 * 1024)).toFixed(2),
-        ...analysis,
-      },
-    });
-  } catch (error) {
-    console.error("Analysis API Error:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error:
-          error.message ||
-          "An unexpected error occurred while analyzing the resume. Please try again.",
-      },
-      { status: 500 }
-    );
-  }
 }
